@@ -502,4 +502,84 @@
 (defn edit-message-caption
  ([token] (edit-message-caption {}))
  ([token params]
-  (call-api-method "editMessageTcaption" token params)))
+  (call-api-method "editMessageCaption" token params)))
+
+(defn edit-message-media
+ ([token] (edit-message-media {}))
+ ([token media params]
+  (let [form (conj {:media media} params)]
+    (call-api-method "editMessageMedia" token form))))
+
+(defn edit-message-live-location
+ ([token] (edit-message-live-location {}))
+ ([token location params]
+  (let [form (conj {:location location} params)]
+    (call-api-method "editMessageMedia" token form))))
+
+(defn stop-message-live-location
+ ([token] (stop-message-live-location {}))
+ ([token params]
+  (call-api-method "stopMessageLiveLocation" token params)))
+
+(defn edit-message-reply-markup
+ ([token] (edit-message-reply-markup {}))
+ ([token params]
+  (call-api-method "editMessageReplyMarkup" token params)))
+
+(defn stop-poll
+  ([token chat-id message_id]
+   (stop-poll token chat-id message-id {}))
+  ([token chat-id message-id]
+   (let [form (conj {:chat_id chat-id
+                     :message-id message-id}
+                     params)]
+     (call-api-method "stopPoll" token form))))
+
+(defn delete-message [token chat-id message-id]
+  (let [form {:chat_id chat-id
+              :message-id message-id}]
+    (call-api-method "deleteMessage" token form)))
+
+;; TODO: create a sticker record
+(defn send-sticker
+  ([token chat-id sticker]
+   (send-sticker token chat-id sticker {}))
+  ([token chat-id sticker]
+   (let [form (conj {:chat_id chat-id
+                     :sticker sticker}
+                    params)]
+     (call-api-method "sendSticker" token form))))
+
+(defn get-sticker-set [token name]
+  (let [form {:name name}]
+    (call-api-method "getStickerSet" token form)))
+
+(defn get-custom-emoji-stickers
+  [token custom-emoji-ids]
+  (let [form {:custom_emoji_ids custom-emoji-ids}]
+    (call-api-method "getCustomEmojiStickers" token form)))
+
+(defn upload-sticker-file [token user-id sticker sticker-format]
+  (let [form {:user_id user-id
+              :sticker sticker
+              :sticker-format sticker-format}]
+    (call-api-method "getStickerSet" token form)))
+
+(defn create-new-sticker-set
+  ([token chat-id name title stickers sticker-format]
+   (create-new-sticker-set
+    token chat-id name title stickers sticker-format {}))
+  ([token chat-id name title stickers sticker-format params]
+   (let [form (conj {:chat_id chat-id
+                     :name name
+                     :title title
+                     :stickers stickers
+                     :sticker_format sticker-format}
+                    params)]
+     (call-api-method "createNew" token form))))
+
+(defn add-sticker-to-set [token user-id name sticker]
+  (let [form {:user_id user-id
+              :name name
+              :sticker sticker}]
+    (call-api-method "addStickerToSet" token form)))
