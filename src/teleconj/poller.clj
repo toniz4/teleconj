@@ -35,12 +35,11 @@
 (defn poller-service [config]
   (let [chan (a/chan 10)
         {:keys [join]} config
-        poller-map {:msg-chan chan
-                    :process (polling-loop config chan)}]
+        process (polling-loop config chan)]
     (a/>!! chan :init)
     (if join
-      (a/<!! (:process poller-map))
-      (:msg-chan poller-map))))
+      (a/<!! process)
+      chan)))
 
 (defn stop! [service]
   (a/close! service))
