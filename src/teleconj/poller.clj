@@ -28,15 +28,11 @@
          (println "exited")
          (do
            (a/>! chan :continue)
-           (let [updates (get-updates token offset timeout)]
-             (if (seq updates)
-               (-> (for [update updates]
-                     (a/go (handler update)))
-                   last
-                   a/<!
-                   inc
-                   recur)
-               (recur offset))))))
+           (let [update (->> (get-updates token offset timeout)
+                             (reduce #(a/go (handler %2)) ())]
+             (recur (if (some? update)
+                      (inc (a/<! update))
+                      offset))))))
      chan)))
 
 (defn stop! [service]
