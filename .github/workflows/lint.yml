@@ -17,11 +17,10 @@ jobs:
         with:
           clj-kondo: 'latest'
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: debug
-        run: ls .
+     
       
       - name: get version
-        run: clj-kondo --version
+        run: ls && clj-kondo --version
       
       - name: Lint
         run: clj-kondo --lint src --config '{:output {:pattern "::{{level}} file={{filename}},line={{row}},col={{col}}::{{message}}"}}'
