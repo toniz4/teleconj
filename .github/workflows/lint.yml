@@ -17,6 +17,8 @@ jobs:
         with:
           clj-kondo: 'latest'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: debug
+        run: ls .
       
       - name: get version
         run: clj-kondo --version
