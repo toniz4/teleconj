@@ -5,21 +5,17 @@ on:
   pull_request:
     types: [synchronize, opened, edited]
 
-name: Linting
+name: Push / PR Builder
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@12.1
-        with:
-          clj-kondo: 'latest'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: get version
-        run: clj-kondo --version
-      
-      - name: Lint
-        run: clj-kondo --lint src --config '{:output {:pattern "::{{level}} file={{filename}},line={{row}},col={{col}}::{{message}}"}}'
+    - uses: DeLaGuardo/setup-clj-kondo@master
+      with:
+        version: '2023.10.20'
+
+    - uses: actions/checkout@v2
+
+    - name: Lint
+      run: clj-kondo --lint src --config '{:output {:pattern "::{{level}} file={{filename}},line={{row}},col={{col}}::{{message}}"}}'
