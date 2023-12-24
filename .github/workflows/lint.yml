@@ -1,21 +1,17 @@
-name: Check for errors
-
 on:
-  push:
-    branches:
-      - master
+  push
   pull_request:
-    branches:
-      - master
+    types: [synchronize, opened, edited]
+
+name: Push / PR Builder
 
 jobs:
-  check:
+  lint:
     runs-on: ubuntu-latest
-    permissions: write-all
     steps:
-    - uses: actions/checkout@v1
-    - uses: DeLaGuardo/clojure-lint-action@master
-      with:
-        clj-kondo-args: --lint src
-        check-name: Linting with clj-kondo
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+    - uses: DeLaGuardo/setup-clj-kondo@v1
+
+    - uses: actions/checkout@v2
+
+    - name: Lint
+      run: clj-kondo --lint src --config '{:output {:pattern "::{{level}} file={{filename}},line={{row}},col={{col}}::{{message}}"}}'
