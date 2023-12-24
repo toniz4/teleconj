@@ -1,14 +1,17 @@
-name: Lint project with clj-kondo
-
 on:
+  push
   pull_request:
     types: [synchronize, opened, edited]
+
+name: Push / PR Builder
 
 jobs:
   lint:
     runs-on: ubuntu-latest
-    container: borkdude/clj-kondo:latest
     steps:
-    - uses: actions/checkout@v2.3.4
-    - name: Run clj-kondo
-      run: clj-kondo --lint src --config .clj-kondo/config.edn
+    - uses: DeLaGuardo/setup-clj-kondo@v1
+
+    - uses: actions/checkout@v2
+
+    - name: Lint
+      run: clj-kondo --lint src --config '{:output {:pattern "::{{level}} file={{filename}},line={{row}},col={{col}}::{{message}}"}}'
