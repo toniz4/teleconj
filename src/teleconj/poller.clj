@@ -22,14 +22,11 @@
         (println "exited")
         (do
           (a/>! chan :continue)
-          (let [updates (get-updates token offset timeout)]
-            (if (seq updates)
-              (-> (for [update updates]
-                    (a/go (handler update)))
-                  last
-                  a/<!
-                  inc
-                  recur)
+          (let [updates (get-updates token offset timeout)
+                {update-id :update_id :as last-update} (last updates)]
+            (run! #(a/go (handler %)) updates)
+            (if (some? last-update)
+              (recur (inc update-id))
               (recur offset))))))))
 
 (defn poller-service [config]
