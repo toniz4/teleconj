@@ -1,0 +1,1 @@
+{:hooks {:macroexpand {teleconj.client/defn-api-method client/defn-api-method}}}
