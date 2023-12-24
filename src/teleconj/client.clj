@@ -576,10 +576,144 @@
                      :stickers stickers
                      :sticker_format sticker-format}
                     params)]
-     (call-api-method "createNew" token form))))
+     (call-api-method "createNewStickerSet" token form))))
 
 (defn add-sticker-to-set [token user-id name sticker]
   (let [form {:user_id user-id
               :name name
               :sticker sticker}]
     (call-api-method "addStickerToSet" token form)))
+
+(defn set-sticker-position-in-set [token sticker position]
+  (let [form {:sticker sticker
+              :position position}]
+    (call-api-method "setStickerPositionInSet" token form)))
+
+(defn delete-sticker-from-set [token sticker position]
+  (let [form {:sticker sticker}]
+    (call-api-method "deleteStickerFromSet" token form)))
+
+(defn set-sticker-emoji-list [token sticker emoji-list]
+  (let [form {:sticker sticker
+              :emoji_list emoji-list}]
+    (call-api-method "setStickerEmojiList" token form)))
+
+(defn set-sticker-keywords [token sticker keywords]
+  (let [form {:sticker sticker
+              :keywords keywords}]
+    (call-api-method "setStickerKeywords" token form)))
+
+(defn set-sticker-set-title [token name title]
+  (let [form {:name name
+              :title title}]
+    (call-api-method "setStickerSetTitle" token form)))
+
+(defn setStickerMaskPosition
+  ([token sticker]
+   (setStickerMaskPosition token sticker {}))
+  ([token sticker params]
+   (let [form (conj {:sticker sticker} params)]
+     (call-api-method "setStickerMaskPosition" token form))))
+
+(defn set-sticker-set-thumbnail
+  ([token name user_id]
+   (set-sticker-set-thumbnail token name user_id {}))
+  ([token name user_id params]
+   (let [form (conj {:sticker sticker} params)]
+     (call-api-method "setStickerSetThumbnail" token form))))
+
+(defn set-custom-emoji-sticker-set-thumbnail
+  ([token name]
+   (set-custom-emoji-sticker-set-thumbnail token name {}))
+  ([token name params]
+   (let [form (conj {:name name} params)]
+     (call-api-method "setCustomEmojiStickerSetThumbnail" token form))))
+
+(defn delete-sticker-set [token name]
+  (let [form {:name name}]
+    (call-api-method "deleteStickerSet" token form)))
+
+(defn answer-inline-query
+  ([token inline-query-id results]
+   (answer-inline-query token inline-query-id results {}))
+  ([token inline-query-id results]
+   (let [form (conj {:inline_query_id inline-query-id
+                     :results results}
+                    params)]
+     (call-api-method "answerInlineQuery" token form))))
+
+(defn answer-inline-query
+  ([token inline-query-id results]
+   (answer-inline-query token inline-query-id results {}))
+  ([token inline-query-id results]
+   (let [form (conj {:inline_query_id inline-query-id
+                     :results results}
+                    params)]
+     (call-api-method "answerInlineQuery" token form))))
+
+;; TODO rewrite it using keyword arguments
+(defn send-invoice
+  ([token chat-id title description payload provider-token currency prices]
+   (send-invoice
+    token chat-id title description payload provider-token currency prices {}))
+  ([token chat-id title description payload provider-token currency prices params]
+   (let [form (conj {:chat_id chat-id
+                     :title title
+                     :description description
+                     :payload payload
+                     :provider_token provider-token
+                     :currrency currency
+                     :prices prices}
+                    params)]
+     (call-api-method "sendInvoice" token form))))
+
+(defn send-invoice-link
+  ([token chat-id title description payload provider-token currency prices]
+   (send-invoice-link
+    token chat-id title description payload provider-token currency prices {}))
+  ([token chat-id title description payload provider-token currency prices params]
+   (let [form (conj {:chat_id chat-id
+                     :title title
+                     :description description
+                     :payload payload
+                     :provider_token provider-token
+                     :currrency currency
+                     :prices prices}
+                    params)]
+     (call-api-method "sendInvoiceLink" token form))))
+
+(defn answer-shipping-query
+  ([token shipping-query-id ok]
+   (answer-shipping-query token shipping-query-id ok))
+  ([token shipping-query-id ok params]
+   (let [form (conj {:shipping_query_id shipping-query-id
+                     :ok ok}
+                    params)]
+     (call-api-method "answerShippingQuery" token form))))
+
+(defn answer-pre-checkout-query
+  ([pre-checkout-query-id ok]
+   (answer-pre-checkout-query token pre-checkout-query-id ok))
+  ([token pre-checkout-query-id ok params]
+   (let [form (conj {:pre_checkout_query_id pre-checkout-query-id
+                     :ok ok}
+                    params)]
+     (call-api-method "answerPreCheckoutQuery" token form))))
+
+(defn send-game
+  ([token chat-id game-short-name]
+   (send-game token chat-id game-short-name {}))
+  ([token chat-id game-short-name params]
+   (let [form (conj {:chat_id chat-id
+                     :game_short_name game-short-name}
+                    params)]
+     (call-api-method "sendGame" token form))))
+
+(defn set-game-score
+  ([token chat-id user-id]
+   (set-game chat-id user-id))
+  ([token chat-id user-id params]
+   (let [form (conj {:chat_id game-short-id
+                     :user_id user-id}
+                    params)]
+     (call-api-method "answerPreCheckoutQuery" token form))))
