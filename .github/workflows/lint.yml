@@ -9,7 +9,9 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: DeLaGuardo/setup-clj-kondo@v1
+    - uses: DeLaGuardo/setup-clj-kondo@master
+      with:
+        version: '2020.04.05'
 
     - uses: actions/checkout@v2
 
