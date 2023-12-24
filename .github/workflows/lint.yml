@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Install clojure tools
-        uses: DeLaGuardo/setup-clojure@12.1
+
+      - uses: DeLaGuardo/setup-clj-kondo@master
         with:
-          clj-kondo: 'latest'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version: '2023.10.20'
+
       - name: Run clj-kondo
         run: |
-          ls && clj-kondo --lint src --config '{:output {:pattern "::{{level}} file={{filename}},line={{row}},col={{col}}::{{message}}"}}'
+          clj-kondo --lint src --config '{:output {:pattern "::{{level}} file={{filename}},line={{row}},col={{col}}::{{message}}"}}'
