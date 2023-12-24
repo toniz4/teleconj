@@ -23,9 +23,9 @@
         (do
           (a/>! chan :continue)
           (let [updates (get-updates token offset timeout)
-                {update-id :update_id :as last-update} (last updates)]
+                {update-id :update_id} (last updates)]
             (run! #(a/go (handler %)) updates)
-            (if (some? last-update)
+            (if (some? update-id)
               (recur (inc update-id))
               (recur offset))))))))
 
