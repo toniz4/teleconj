@@ -8,6 +8,7 @@
 #_ ; alternatively, use MAJOR.MINOR.COMMITS:
 (def version (format "1.0.%s" (b/git-count-revs nil)))
 (def class-dir "target/classes")
+(def uber-file "target/teleconj-uber.jar")
 
 (defn- jar-opts [opts]
   (assoc opts
@@ -29,6 +30,17 @@
     (println "\nBuilding JAR...")
     (b/jar opts))
   opts)
+
+(defn uber [_]
+  (let [basis (b/create-basis {:project "deps.edn"})]
+    (b/copy-dir {:src-dirs ["src" "resources"]
+                 :target-dir class-dir})
+    (b/compile-clj {:basis basis
+                    :src-dirs ["src/teleconj"]
+                    :class-dir class-dir})
+    (b/uber {:class-dir class-dir
+             :uber-file uber-file
+             :basis basis})))
 
 (defn install "Install the JAR locally." [opts]
   (let [opts (jar-opts opts)]

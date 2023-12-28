@@ -1,1 +1,4 @@
-{:hooks {:macroexpand {teleconj.client/defn-api-method client/defn-api-method}}}
+{
+ ;; :lint-as {teleconj.client/defn-api-method clojure.core/defn}
+ :hooks {:macroexpand {teleconj.client/defn-api-method client/defn-api-method}}
+ }
