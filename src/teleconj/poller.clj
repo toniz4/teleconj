@@ -1,19 +1,23 @@
 (ns teleconj.poller
-  (:require [org.httpkit.client :as client]
-            [teleconj.client :refer [base-url]]
-            [cheshire.core :as json]
-            [clojure.core.async :as a]))
+  (:require
+   [clojure.tools.logging :as log]
+   [org.httpkit.client :as client]
+   [teleconj.client :refer [base-url]]
+   [cheshire.core :as json]
+   [clojure.core.async :as a]))
+
+;; (log/info "teste")
 
 (defn- get-updates
   ([token]
    (get-updates token 0 nil))
   ([token offset timeout]
-   (let [url (str base-url "/bot" token "/getUpdates")]
-     (-> @(client/get url {:query-params {:offset offset
-                                          :timout timeout}})
-         :body
-         (json/decode keyword)
-         :result))))
+   (let [url (str base-url "/bot" token "/getUpdates")
+         result (client/get url {:query-params {:offset offset
+                                                :timout timeout}})]
+     (if (not= (:status @result) 200)
+       "deu ruim"
+       (-> @result :body (json/decode keyword) :result)))))
 
 (defn- polling-loop [config chan]
   (let [{:keys [timeout token handler]} config]
@@ -40,3 +44,6 @@
 
 (defn stop! [service]
   (a/close! service))
+
+(get-updates "6258987071AAHliVLweKcDX6qSAR8lkMkaFjz4dzX-l5o")
+

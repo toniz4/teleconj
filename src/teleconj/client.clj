@@ -1,719 +1,563 @@
 (ns teleconj.client
-  (:require [org.httpkit.client :as client]))
+  (:require [org.httpkit.client :as client]
+            [clojure.string :as str]))
 
 (def base-url "https://api.telegram.org")
+
+(defn- kebab-case->camel-case [s]
+  (reduce #(if (= (last %1) \-)
+             (str (apply str (butlast %1)) (str/upper-case %2))
+             (str %1 %2)) "" s))
+
+(defn- hyphen->underscore [s]
+  (str/replace s "-" "_"))
+
+(defn- args->map [args]
+  (->> args
+       (map #(if (keyword? %)
+               (keyword (hyphen->underscore (name %)))
+               %))
+       (apply hash-map)))
 
 (defn- call-api-method [method token params]
   (let [url (str base-url "/bot" token "/" method)]
     (client/post url {:content-type :json
                       :form-params params})))
 
-(defn send-message
-  ([token chat-id text]
-   (send-message token chat-id text {}))
-  ([token chat-id text params]
-   (let [form (conj {:chat_id chat-id
-                     :text text}
-                     params)]
-     (call-api-method "sendMessage" token form))))
-
-(defn forward-message
-  ([token chat-id from-chat-id message-id]
-   (forward-message token chat-id from-chat-id message-id {}))
-  ([token chat-id from-chat-id message-id params]
-   (let [form (conj {:chat_id chat-id
-                     :from_chat_id from-chat-id
-                     :message_id message-id}
-                    params)]
-     (call-api-method "forwardMessage" token form))))
-
-(defn copy-message
-  ([token chat-id text]
-   (copy-message token chat-id text {}))
-  ([token chat-id text params]
-   (let [form (conj {:chat_id chat-id
-                     :from_chat_id from-chat-id
-                     :message_id}
-                     params)]
-     (call-api-method "copyMessage" token form))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Adjust functions in this section to work when receiving files by multipart
-;; requests
-
-(defn get-file
-  ([token file-id]
-   (get-file token file-id {}))
-  ([token file-id params]
-   (let [form (conj {:file_id file-id}
-                    params)]
-     (call-api-method "getFile" token form))))
-
-(defn send-photo
-  ([token chat-id photo]
-   (send-photo token chat-id photo {}))
-  ([token chat-id photo params]
-   (let [form (conj {:chat_id chat-id
-                     :photo photo}
-                     params)]
-     (call-api-method "sendPhoto" token form))))
-
-(defn send-audio
-  ([token chat-id audio]
-   (send-audio token chat-id audio {}))
-  ([token chat-id audio params]
-   (let [form (conj {:chat_id chat-id
-                     :audio audio}
-                     params)]
-     (call-api-method "sendAudio" token form))))
-
-(defn send-document
-  ([token chat-id document]
-   (send-document token chat-id document {}))
-  ([token chat-id document params]
-   (let [form (conj {:chat_id chat-id
-                     :document document}
-                     params)]
-     (call-api-method "sendDocument" token form))))
-
-(defn send-video
-  ([token chat-id video]
-   (send-video token chat-id video {}))
-  ([token chat-id video params]
-   (let [form (conj {:chat_id chat-id
-                     :video video}
-                     params)]
-     (call-api-method "sendVideo" token form))))
-
-(defn send-animation
-  ([token chat-id animation]
-   (send-animation token chat-id animation {}))
-  ([token chat-id animation params]
-   (let [form (conj {:chat_id chat-id
-                     :animation animation}
-                     params)]
-     (call-api-method "sendAnimation" token form))))
-
-(defn send-voice
-  ([token chat-id voice]
-   (send-voice token chat-id voice {}))
-  ([token chat-id voice params]
-   (let [form (conj {:chat_id chat-id
-                     :voice voice}
-                     params)]
-     (call-api-method "sendVoice" token form))))
-
-(defn send-video-note
-  ([token chat-id video-note]
-   (send-video-note token chat-id video-note {}))
-  ([token chat-id video-note params]
-   (let [form (conj {:chat_id chat-id
-                     :video_note video-note}
-                     params)]
-     (call-api-method "sendVideoNote" token form))))
-
-;; TODO send-media-group
-(defn send-media-group
-  ([token chat-id media-group]
-   (send-media-group token chat-id media-group {}))
-  ([token chat-id media-group params]
-   nil))
-
-(defn send-location
-  ([token chat-id location]
-   (send-location token chat-id location {}))
-  ([token chat-id location params]
-   (let [form (conj {:chat_id chat-id
-                     :location location}
-                     params)]
-     (call-api-method "sendLocation" token form))))
-
-(defn send-venue
-  ([token chat-id location title address]
-   (send-venue token chat-id location title address {}))
-  ([token chat-id location title address params]
-   (let [form (conj {:chat_id chat-id
-                     :location location
-                     :title title
-                     :address address}
-                     params)]
-     (call-api-method "sendVenue" token form))))
-
-(defn send-contact
-  ([token chat-id phone-number first-name]
-   (send-contact phone-number first-name {}))
-  ([token chat-id phone-number first-name params]
-   (let [form (conj {:chat_id chat-id
-                     :phone_number phone-numer
-                     :first_name first-name}
-                     params)]
-     (call-api-method "sendContact" token form))))
-
-(defn send-poll
-  ([token chat-id question options]
-   (send-poll token chat-id question options {}))
-  ([token chat-id question options]
-   (let [form (conj {:chat_id chat-id
-                     :question question
-                     :options options}
-                     params)]
-     (call-api-method "sendPoll" token form))))
-
-(defn send-dice
-  ([token chat-id]
-   (send-dice token chat-id {}))
-  ([token chat-id params]
-   (let [form (conj {:chat_id chat-id} params)]
-     (call-api-method "sendPoll" token form))))
-
-(defn send-chat-action
-  ([token chat-id action]
-   (send-chat-action token chat-id action {}))
-  ([token chat-id params]
-   (let [form (conj {:chat_id chat-id
-                     :action action}
-                    params)]
-     (call-api-method "sendChatAction" token form))))
-
-(defn get-user-profile-photos
-  ([token chat-id]
-   (get-user-profile-photos token chat-id {}))
-  ([token chat-id params]
-   (let [form (conj {:chat_id chat-id}
-                    params)]
-     (call-api-method "getUserProfilePhotos" token form))))
-
-(defn ban-chat-member
-  ([token chat-id user-id]
-   (ban-chat-member token chat-id user-id {}))
-  ([token chat-id user-id params]
-   (let [form (conj {:chat_id chat-id
-                     :user_id user-id}
-                    params)]
-     (call-api-method "banChatMember" token form))))
-
-(defn unban-chat-member
-  ([token chat-id user-id]
-   (unban-chat-member token chat-id user-id {}))
-  ([token chat-id user-id params]
-   (let [form (conj {:chat_id chat-id
-                     :user_id user-id}
-                    params)]
-     (call-api-method "unbanChatMember" token form))))
-
-(defn restrict-chat-member
-  ([token chat-id user-id]
-   (restrict-chat-member token chat-id user-id {}))
-  ([token chat-id user-id params]
-   (let [form (conj {:chat_id chat-id
-                     :user_id user-id
-                     :permissions permissions}
-                    params)]
-     (call-api-method "restictChatMember" token form))))
-
-(defn promote-chat-member
-  ([token chat-id user-id]
-   (promote-chat-member token chat-id user-id {}))
-  ([token chat-id user-id params]
-   (let [form (conj {:chat_id chat-id
-                     :user_id user-id}
-                    params)]
-     (call-api-method "promoteChatMember" token form))))
-
-(defn set-chat-administrator-custom-title
-  [token chat-id user-id custom-title]
-  (let [form {:chat_id chat-id
-              :user_id user-id
-              :custom_title custom-title}]
-    (call-api-method "setChatAdministratorCustomTitle" token form)))
-
-(defn ban-chat-sender-chat
-  [token chat-id sender-chat-id]
-  (let [form {:chat_id chat-id
-              :sender_chat_id sender-chat-id}]
-    (call-api-method "banChatSenderChat" token form)))
-
-(defn unban-chat-sender-chat
-  [token chat-id sender-chat-id]
-  (let [form {:chat_id chat-id
-                    :sender_chat_id sender-chat-id}]
-    (call-api-method "unbanChatSenderChat" token form)))
-
-(defn set-chat-permissions
-  ([token chat-id permissions]
-   (set-chat-permissions token chat-id permissions {}))
-  ([token chat-id permissions params]
-   (let [form (conj {:chat_id chat-id
-                     :user_id user-id
-                     :permissions permissions}
-                    params)]
-     (call-api-method "setChatPermissions" token form))))
-
-(defn export-chat-invite-link [token chat-id]
-  (let [form {:chat_id chat-id}]
-    (call-api-method "exportChatInviteLink" token form)))
-
-(defn create-chat-invite-link [token chat-id]
-  ([token chat-id]
-   (create-chat-invite-link chat-id {}))
-  ([token chat-id params]
-   (let [form (conj {:chat_id chat-id} params)]
-     (call-api-method "createChatInviteLink" token form))))
-
-(defn edit-chat-invite-link [token chat-id]
-  ([token chat-id invite-link]
-   (edit-chat-invite-link chat-id invite-link {}))
-  ([token chat-id invite-link params]
-   (let [form (conj {:chat_id chat-id} params)]
-     (call-api-method "editChatInviteLink" token form))))
-
-(defn revoke-chat-invite-link [token chat-id invite-link]
-  (let [form {:chat_id chat-id
-              :invite-link invite-link}]
-    (call-api-method "revokeChatInviteLink" token form)))
-
-(defn approve-chat-join-request [token chat-id invite-link]
-  (let [form {:chat_id chat-id
-              :user_id user-id}]
-    (call-api-method "approveChatJoinRequest" token form)))
-
-(defn decline-chat-join-request [token chat-id invite-link]
-  (let [form {:chat_id chat-id
-              :user_id user-id}]
-    (call-api-method "declineChatJoinRequest" token form)))
-
-(defn set-chat-photo [token chat-id invite-link]
-  (let [form {:chat_id chat-id
-              :photo photo}]
-    (call-api-method "setChatPhoto" token form)))
-
-(defn delete-chat-photo [token chat-id invite-link]
-  (let [form {:chat_id chat-id}]
-    (call-api-method "deleteChatPhoto" token form)))
-
-(defn set-chat-title [token chat-id invite-link]
-  (let [form {:chat_id chat-id
-              :title title}]
-    (call-api-method "setChatTitle" token form)))
-
-(defn set-chat-description [token chat-id invite-link]
-  (let [form {:chat_id chat-id
-              :description description}]
-    (call-api-method "setChatDescription" token form)))
-
-(defn pin-chat-message
-  ([token chat-id message-id]
-   (pin-chat-message chat-id message-id {}))
-  ([token chat-id message-id params]
-   (let [form (conj {:chat_id chat-id
-                     :message_id message-id}
-                    params)]
-     (call-api-method "pinChatMessage" token form))))
-
-(defn unpin-chat-message
-  ([token chat-id message-id]
-   (unpin-chat-message chat-id message-id {}))
-  ([token chat-id message-id params]
-   (let [form (conj {:chat_id chat-id
-                     :message_id message-id}
-                    params)]
-     (call-api-method "unpinChatMessage" token form))))
-
-(defn unpin-all-chat-messages [token chat-id]
-  (let [form {:chat_id chat-id}]
-    (call-api-method "unpinAllChatMessages" token form)))
-
-(defn leave-chat [token chat-id]
-  (let [form {:chat_id chat-id}]
-    (call-api-method "leaveChat" token form)))
-
-(defn get-chat [token chat-id]
-  (let [form {:chat_id chat-id}]
-    (call-api-method "getChat" token form)))
-
-(defn get-chat-administrators [token chat-id]
-  (let [form {:chat_id chat-id}]
-    (call-api-method "getChatAdministrators" token form)))
-
-(defn get-chat-member-count [token chat-id]
-  (let [form {:chat_id chat-id}]
-    (call-api-method "getChatMemberCount" token form)))
-
-(defn get-chat-member [token chat-id user-id]
-  (let [form {:chat_id chat-id
-              :user_id user-id}]
-    (call-api-method "getChatMember" token form)))
-
-(defn get-chat-member [token chat-id user-id]
-  (let [form {:chat_id chat-id
-              :user_id user-id}]
-    (call-api-method "getChatMember" token form)))
-
-(defn set-chat-sticker-set [token chat-id stciker-set-name]
-  (let [form {:chat_id chat-id
-              :sticker_set_name sticker-set-name}]
-    (call-api-method "setChatStickerSet" token form)))
-
-(defn delete-chat-sticker-set [token chat-id]
-  (let [form {:chat_id chat-id}]
-    (call-api-method "deleteChatStickerSet" token form)))
-
-(defn delete-chat-sticker-set [token]
-  (call-api-method "deleteChatStickerSet" token))
-
-(defn create-forum-topic
-  ([token chat-id message-id]
-   (create-forum-topic chat-id name {}))
-  ([token chat-id message-id params]
-   (let [form (conj {:chat_id chat-id
-                     :name name}
-                    params)]
-     (call-api-method "createForumTropic" token form))))
-
-(defn edit-forum-topic
-  ([token chat-id message-id]
-   (edit-forum-topic chat-id name {}))
-  ([token chat-id message-id params]
-   (let [form (conj {:chat_id chat-id
-                     :name name}
-                    params)]
-     (call-api-method "editForumTropic" token form))))
-
-(defn close-forum-topic
-  [token chat-id message-thread-id params]
-  (let [form {:chat_id chat-id
-              :message_thread_id message-thread-id}]
-    (call-api-method "closeForumTropic" token form)))
-
-(defn reopen-forum-topic
-  [token chat-id message-thread-id]
-  (let [form {:chat_id chat-id
-              :message_thread_id message-thread-id}]
-    (call-api-method "reopenForumTropic" token form)))
-
-(defn delete-forum-topic
-  ([token chat-id message-thread-id]
-   (delete-forum-topic chat-id message-thread-id {}))
-  ([token chat-id message-thread-id params]
-   (let [form {:chat_id chat-id
-               :message_thread_id message-thread-id}]
-     (call-api-method "deleteForumTropic" token form))))
-
-(defn unpin-all-forum-topic-messages
-  [token chat-id message-thread-id params]
-  (let [form {:chat_id chat-id
-              :message_thread_id message-thread-id}]
-    (call-api-method "unpinAllForumTopicMessages" token form)))
-
-(defn edit-general-forum-topic [token chat-id name]
-  (let [form {:chat_id chat-id
-              :name name}]
-    (call-api-method "editGeneralForumTopic" token form)))
-
-(defn close-general-forum-topic [token chat-id name]
-  (let [form {:chat_id chat-id}]
-    (call-api-method "closeGeneralForumTopic" token form)))
-
-(defn reopen-general-forum-topic [token chat-id name]
-  (let [form {:chat_id chat-id}]
-    (call-api-method "reopenGeneralForumTopic" token form)))
-
-(defn hide-general-forum-topic [token chat-id name]
-  (let [form {:chat_id chat-id}]
-    (call-api-method "hideGeneralForumTopic" token form)))
-
-(defn unhide-general-forum-topic [token chat-id name]
-  (let [form {:chat_id chat-id}]
-    (call-api-method "unhideGeneralForumTopic" token form)))
-
-(defn unpin-all-general-forum-topic-messages [token chat-id name]
-  (let [form {:chat_id chat-id}]
-    (call-api-method "unpinAllGeneralForumTopicMessages" token form)))
-
-(defn answer-callback-query [token chat-id name]
-  (let [form {:chat_id chat-id}]
-    (call-api-method "answerCallbackQuery" token form)))
-
-(defn set-my-commands [token chat-id name]
-  (let [form {:commands commands}]
-    (call-api-method "setMyCommands" token form)))
-
-(defn delete-my-commands
- ([token] (delete-my-commands {}))
- ([token params]
-  (call-api-method "deleteMyCommands" token params)))
-
-(defn get-my-commands
- ([token] (get-my-commands {}))
- ([token params]
-  (call-api-method "getMyCommands" token params)))
-
-(defn set-my-name
- ([token] (set-my-name {}))
- ([token params]
-  (call-api-method "setMyName" token params)))
-
-(defn get-my-name
- ([token] (get-my-name {}))
- ([token params]
-  (call-api-method "getMyName" token params)))
-
-(defn set-my-description
- ([token] (set-my-description {}))
- ([token params]
-  (call-api-method "setMyDescription" token params)))
-
-(defn get-my-description
- ([token] (get-my-description {}))
- ([token params]
-  (call-api-method "getMyDescription" token params)))
-
-(defn set-my-short-description
- ([token] (set-my-short-description {}))
- ([token params]
-  (call-api-method "setMyShortDescription" token params)))
-
-(defn get-my-short-description
- ([token] (get-my-short-description {}))
- ([token params]
-  (call-api-method "getMyShortDescription" token params)))
-
-(defn get-chat-menu-button
- ([token] (get-chat-menu-button {}))
- ([token params]
-  (call-api-method "getChatMenuButton" token params)))
-
-(defn set-my-default-administrator-rights
- ([token] (set-my-default-administrator-rights {}))
- ([token params]
-  (call-api-method "setMyAdministratorRights" token params)))
-
-(defn get-my-default-administrator-rights
- ([token] (get-my-default-administrator-rights {}))
- ([token params]
-  (call-api-method "getMyAdministratorRights" token params)))
-
-(defn edit-message-text
- ([token] (edit-message-text {}))
- ([token text params]
-  (let [form (conj {:text text} params)]
-    (call-api-method "editMessageText" token form))))
-
-(defn edit-message-caption
- ([token] (edit-message-caption {}))
- ([token params]
-  (call-api-method "editMessageCaption" token params)))
-
-(defn edit-message-media
- ([token] (edit-message-media {}))
- ([token media params]
-  (let [form (conj {:media media} params)]
-    (call-api-method "editMessageMedia" token form))))
-
-(defn edit-message-live-location
- ([token] (edit-message-live-location {}))
- ([token location params]
-  (let [form (conj {:location location} params)]
-    (call-api-method "editMessageMedia" token form))))
-
-(defn stop-message-live-location
- ([token] (stop-message-live-location {}))
- ([token params]
-  (call-api-method "stopMessageLiveLocation" token params)))
-
-(defn edit-message-reply-markup
- ([token] (edit-message-reply-markup {}))
- ([token params]
-  (call-api-method "editMessageReplyMarkup" token params)))
-
-(defn stop-poll
-  ([token chat-id message_id]
-   (stop-poll token chat-id message-id {}))
-  ([token chat-id message-id]
-   (let [form (conj {:chat_id chat-id
-                     :message-id message-id}
-                     params)]
-     (call-api-method "stopPoll" token form))))
-
-(defn delete-message [token chat-id message-id]
-  (let [form {:chat_id chat-id
-              :message-id message-id}]
-    (call-api-method "deleteMessage" token form)))
-
-;; TODO: create a sticker record
-(defn send-sticker
-  ([token chat-id sticker]
-   (send-sticker token chat-id sticker {}))
-  ([token chat-id sticker]
-   (let [form (conj {:chat_id chat-id
-                     :sticker sticker}
-                    params)]
-     (call-api-method "sendSticker" token form))))
-
-(defn get-sticker-set [token name]
-  (let [form {:name name}]
-    (call-api-method "getStickerSet" token form)))
-
-(defn get-custom-emoji-stickers
-  [token custom-emoji-ids]
-  (let [form {:custom_emoji_ids custom-emoji-ids}]
-    (call-api-method "getCustomEmojiStickers" token form)))
-
-(defn upload-sticker-file [token user-id sticker sticker-format]
-  (let [form {:user_id user-id
-              :sticker sticker
-              :sticker-format sticker-format}]
-    (call-api-method "getStickerSet" token form)))
-
-(defn create-new-sticker-set
-  ([token chat-id name title stickers sticker-format]
-   (create-new-sticker-set
-    token chat-id name title stickers sticker-format {}))
-  ([token chat-id name title stickers sticker-format params]
-   (let [form (conj {:chat_id chat-id
-                     :name name
-                     :title title
-                     :stickers stickers
-                     :sticker_format sticker-format}
-                    params)]
-     (call-api-method "createNewStickerSet" token form))))
-
-(defn add-sticker-to-set [token user-id name sticker]
-  (let [form {:user_id user-id
-              :name name
-              :sticker sticker}]
-    (call-api-method "addStickerToSet" token form)))
-
-(defn set-sticker-position-in-set [token sticker position]
-  (let [form {:sticker sticker
-              :position position}]
-    (call-api-method "setStickerPositionInSet" token form)))
-
-(defn delete-sticker-from-set [token sticker position]
-  (let [form {:sticker sticker}]
-    (call-api-method "deleteStickerFromSet" token form)))
-
-(defn set-sticker-emoji-list [token sticker emoji-list]
-  (let [form {:sticker sticker
-              :emoji_list emoji-list}]
-    (call-api-method "setStickerEmojiList" token form)))
-
-(defn set-sticker-keywords [token sticker keywords]
-  (let [form {:sticker sticker
-              :keywords keywords}]
-    (call-api-method "setStickerKeywords" token form)))
-
-(defn set-sticker-set-title [token name title]
-  (let [form {:name name
-              :title title}]
-    (call-api-method "setStickerSetTitle" token form)))
-
-(defn setStickerMaskPosition
-  ([token sticker]
-   (setStickerMaskPosition token sticker {}))
-  ([token sticker params]
-   (let [form (conj {:sticker sticker} params)]
-     (call-api-method "setStickerMaskPosition" token form))))
-
-(defn set-sticker-set-thumbnail
-  ([token name user_id]
-   (set-sticker-set-thumbnail token name user_id {}))
-  ([token name user_id params]
-   (let [form (conj {:sticker sticker} params)]
-     (call-api-method "setStickerSetThumbnail" token form))))
-
-(defn set-custom-emoji-sticker-set-thumbnail
-  ([token name]
-   (set-custom-emoji-sticker-set-thumbnail token name {}))
-  ([token name params]
-   (let [form (conj {:name name} params)]
-     (call-api-method "setCustomEmojiStickerSetThumbnail" token form))))
-
-(defn delete-sticker-set [token name]
-  (let [form {:name name}]
-    (call-api-method "deleteStickerSet" token form)))
-
-(defn answer-inline-query
-  ([token inline-query-id results]
-   (answer-inline-query token inline-query-id results {}))
-  ([token inline-query-id results]
-   (let [form (conj {:inline_query_id inline-query-id
-                     :results results}
-                    params)]
-     (call-api-method "answerInlineQuery" token form))))
-
-(defn answer-inline-query
-  ([token inline-query-id results]
-   (answer-inline-query token inline-query-id results {}))
-  ([token inline-query-id results]
-   (let [form (conj {:inline_query_id inline-query-id
-                     :results results}
-                    params)]
-     (call-api-method "answerInlineQuery" token form))))
-
-;; TODO rewrite it using keyword arguments
-(defn send-invoice
-  ([token chat-id title description payload provider-token currency prices]
-   (send-invoice
-    token chat-id title description payload provider-token currency prices {}))
-  ([token chat-id title description payload provider-token currency prices params]
-   (let [form (conj {:chat_id chat-id
-                     :title title
-                     :description description
-                     :payload payload
-                     :provider_token provider-token
-                     :currrency currency
-                     :prices prices}
-                    params)]
-     (call-api-method "sendInvoice" token form))))
-
-(defn send-invoice-link
-  ([token chat-id title description payload provider-token currency prices]
-   (send-invoice-link
-    token chat-id title description payload provider-token currency prices {}))
-  ([token chat-id title description payload provider-token currency prices params]
-   (let [form (conj {:chat_id chat-id
-                     :title title
-                     :description description
-                     :payload payload
-                     :provider_token provider-token
-                     :currrency currency
-                     :prices prices}
-                    params)]
-     (call-api-method "sendInvoiceLink" token form))))
-
-(defn answer-shipping-query
-  ([token shipping-query-id ok]
-   (answer-shipping-query token shipping-query-id ok))
-  ([token shipping-query-id ok params]
-   (let [form (conj {:shipping_query_id shipping-query-id
-                     :ok ok}
-                    params)]
-     (call-api-method "answerShippingQuery" token form))))
-
-(defn answer-pre-checkout-query
-  ([pre-checkout-query-id ok]
-   (answer-pre-checkout-query token pre-checkout-query-id ok))
-  ([token pre-checkout-query-id ok params]
-   (let [form (conj {:pre_checkout_query_id pre-checkout-query-id
-                     :ok ok}
-                    params)]
-     (call-api-method "answerPreCheckoutQuery" token form))))
-
-(defn send-game
-  ([token chat-id game-short-name]
-   (send-game token chat-id game-short-name {}))
-  ([token chat-id game-short-name params]
-   (let [form (conj {:chat_id chat-id
-                     :game_short_name game-short-name}
-                    params)]
-     (call-api-method "sendGame" token form))))
-
-(defn set-game-score
-  ([token chat-id user-id]
-   (set-game chat-id user-id))
-  ([token chat-id user-id params]
-   (let [form (conj {:chat_id game-short-id
-                     :user_id user-id}
-                    params)]
-     (call-api-method "answerPreCheckoutQuery" token form))))
+(defmacro defn-api-method [method-sym doc args]
+  (let [method-name (kebab-case->camel-case (str method-sym))
+        form (reduce #(conj %1 {} {(keyword (hyphen->underscore %2)) %2}) {} args)]
+    `(defn ~method-sym
+       ~doc
+       [~'token ~@args & ~'params]
+       (let [form# (conj ~form (args->map ~'params))]
+         (call-api-method ~method-name ~'token form#)))))
+
+(defn-api-method get-me
+  "A simple method for testing your bot's authentication token. Requires no
+   parameters.  Returns basic information about the bot in form of a User
+   object."
+  [])
+
+(defn-api-method log-out
+  "Use this method to log out from the cloud Bot API server before launching the
+  bot locally. You must log out the bot before running it locally, otherwise
+  there is no guarantee that the bot will receive updates. After a successful
+  call, you can immediately log in on a local server, but will not be able to
+  log in back to the cloud Bot API server for 10 minutes. Returns True on
+  success. Requires no parameters."
+  [])
+
+(defn-api-method close
+  "Use this method to close the bot instance before moving it from one local
+  server to another. You need to delete the webhook before calling this method
+  to ensure that the bot isn't launched again after server restart. The method
+  will return error 429 in the first 10 minutes after the bot is
+  launched. Returns True on success. Requires no parameters."
+  [])
+
+(defn-api-method send-message
+  "Use this method to send text messages. On success, the sent Message is
+  returned."
+  [chat-id text])
+
+(defn-api-method forward-message
+  "Use this method to forward messages of any kind. Service messages can't be
+  forwarded. On success, the sent Message is returned."
+  [chat-id from-chat-id message-id])
+
+(defn-api-method copy-message
+  "Use this method to copy messages of any kind. Service messages and invoice
+  messages can't be copied. A quiz poll can be copied only if the value of the
+  field correct_option_id is known to the bot. The method is analogous to the
+  method forwardMessage, but the copied message doesn't have a link to the
+  original message. Returns the MessageId of the sent message on success."
+  [chat-id from-chat-id message-id])
+
+(defn-api-method send-photo
+  "Use this method to send photos. On success, the sent Message is returned."
+  [chat-id photo])
+
+(defn-api-method send-audio
+  "Use this method to send audio files, if you want Telegram clients to display
+  them in the music player. Your audio must be in the .MP3 or .M4A format. On
+  success, the sent Message is returned. Bots can currently send audio files of
+  up to 50 MB in size, this limit may be changed in the future.
+
+  For sending voice messages, use the sendVoice method instead."
+  [chat-id photo])
+
+(defn-api-method send-document
+  "Use this method to send general files. On success, the sent Message is
+  returned. Bots can currently send files of any type of up to 50 MB in size,
+  this limit may be changed in the future."
+  [chat-id document])
+
+(defn-api-method send-video
+  "Use this method to send video files, Telegram clients support MPEG4 videos
+  (other formats may be sent as Document). On success, the sent Message is
+  returned. Bots can currently send video files of up to 50 MB in size, this
+  limit may be changed in the future."
+  [chat-id video])
+
+(defn-api-method send-animation
+  "Use this method to send animation files (GIF or H.264/MPEG-4 AVC video
+  without sound). On success, the sent Message is returned. Bots can currently
+  send animation files of up to 50 MB in size, this limit may be changed in the
+  future."
+  [chat-id animation])
+
+(defn-api-method send-voice
+  "Use this method to send audio files, if you want Telegram clients to display
+  the file as a playable voice message. For this to work, your audio must be in
+  an .OGG file encoded with OPUS (other formats may be sent as Audio or
+  Document). On success, the sent Message is returned. Bots can currently send
+  voice messages of up to 50 MB in size, this limit may be changed in the
+  future."
+  [chat-id voice])
+
+(defn-api-method send-video-note
+  "Use this method to send video messages. On success, the sent Message is
+  returned."
+  [chat-id video-note])
+
+(defn-api-method send-media-group
+  "Use this method to send a group of photos, videos, documents or audios as an
+  album. Documents and audio files can be only grouped in an album with messages
+  of the same type. On success, an array of Messages that were sent is returned."
+  [chat-id media])
+
+(defn-api-method send-location
+  "Use this method to send point on the map. On success, the sent Message is
+  returned."
+  [chat-id latitude longitude])
+
+(defn-api-method send-venue
+  "Use this method to send information about a venue. On success, the sent
+  Message is returned."
+  [chat-id latitude longitude title address])
+
+(defn-api-method send-contact
+  "Use this method to send phone contacts. On success, the sent Message is
+  returned."
+  [chat-id phone-number first-name])
+
+(defn-api-method send-poll
+  "Use this method to send a native poll. On success, the sent Message is
+  returned."
+  [chat-id question options])
+
+(defn-api-method send-dice
+  "Use this method to send an animated emoji that will display a random
+  value. On success, the sent Message is returned."
+  [chat-id])
+
+(defn-api-method send-chat-action
+  "Use this method when you need to tell the user that something is happening on
+  the bot's side. The status is set for 5 seconds or less (when a message
+  arrives from your bot, Telegram clients clear its typing status). Returns True
+  on success."
+  [chat-id action])
+
+(defn-api-method get-user-profile-photos
+  "Use this method to get a list of profile pictures for a user. Returns a
+  UserProfilePhotos object."
+  [user-id])
+
+(defn-api-method get-file
+  "Use this method to get basic information about a file and prepare it for
+  downloading. For the moment, bots can download files of up to 20MB in size. On
+  success, a File object is returned. The file can then be downloaded via the
+  link https://api.telegram.org/file/bot<token>/<file_path>, where <file_path>
+  is taken from the response. It is guaranteed that the link will be valid for
+  at least 1 hour. When the link expires, a new one can be requested by calling
+  getFile again."
+  [file-id])
+
+(defn-api-method ban-chat-member
+  "Use this method to ban a user in a group, a supergroup or a channel. In the
+  case of supergroups and channels, the user will not be able to return to the
+  chat on their own using invite links, etc., unless unbanned first. The bot
+  must be an administrator in the chat for this to work and must have the
+  appropriate administrator rights. Returns True on success."
+  [chat-id user-id])
+
+(defn-api-method unban-chat-member
+  "Use this method to unban a previously banned user in a supergroup or
+  channel. The user will not return to the group or channel automatically, but
+  will be able to join via link, etc. The bot must be an administrator for this
+  to work. By default, this method guarantees that after the call the user is
+  not a member of the chat, but will be able to join it. So if the user is a
+  member of the chat they will also be removed from the chat. If you don't want
+  this, use the parameter only_if_banned. Returns True on success."
+  [chat-id user-id])
+
+(defn-api-method restrict-chat-member
+  "Use this method to restrict a user in a supergroup. The bot must be an
+  administrator in the supergroup for this to work and must have the appropriate
+  administrator rights. Pass True for all permissions to lift restrictions from
+  a user. Returns True on success."
+  [chat-id user-id permissions])
+
+(defn-api-method promote-chat-member
+  "Use this method to promote or demote a user in a supergroup or a channel. The
+  bot must be an administrator in the chat for this to work and must have the
+  appropriate administrator rights. Pass False for all boolean parameters to
+  demote a user. Returns True on success."
+  [chat-id user-id])
+
+(defn-api-method set-chat-administrator-custom-title
+  "Use this method to set a custom title for an administrator in a supergroup
+  promoted by the bot. Returns True on success."
+  [chat-id user-id custom-title])
+
+(defn-api-method ban-chat-sender-chat
+  "Use this method to ban a channel chat in a supergroup or a channel. Until the
+  chat is unbanned, the owner of the banned chat won't be able to send messages
+  on behalf of any of their channels. The bot must be an administrator in the
+  supergroup or channel for this to work and must have the appropriate
+  administrator rights. Returns True on success."
+  [chat-id sender-chat-id])
+
+(defn-api-method unban-chat-sender-chat
+  "Use this method to unban a previously banned channel chat in a supergroup or
+  channel. The bot must be an administrator for this to work and must have the
+  appropriate administrator rights. Returns True on success."
+  [chat-id sender-chat-id])
+
+(defn-api-method set-chat-permissions
+  "Use this method to unban a previously banned channel chat in a supergroup or
+  channel. The bot must be an administrator for this to work and must have the
+  appropriate administrator rights. Returns True on success."
+  [chat-id permissions])
+
+(defn-api-method export-chat-invite-link
+  "Use this method to generate a new primary invite link for a chat; any
+  previously generated primary link is revoked. The bot must be an administrator
+  in the chat for this to work and must have the appropriate administrator
+  rights. Returns the new invite link as String on success."
+  [chat-id])
+
+(defn-api-method create-chat-invite-link
+  "Use this method to create an additional invite link for a chat. The bot must
+  be an administrator in the chat for this to work and must have the appropriate
+  administrator rights. The link can be revoked using the method
+  revokeChatInviteLink. Returns the new invite link as ChatInviteLink object."
+  [chat-id])
+
+(defn-api-method edit-chat-invite-link
+  "Use this method to edit a non-primary invite link created by the bot. The bot
+  must be an administrator in the chat for this to work and must have the
+  appropriate administrator rights. Returns the edited invite link as a
+  ChatInviteLink object."
+  [chat-id invite-link])
+
+(defn-api-method revoke-chat-invite-link
+  "Use this method to revoke an invite link created by the bot. If the primary
+  link is revoked, a new link is automatically generated. The bot must be an
+  administrator in the chat for this to work and must have the appropriate
+  administrator rights. Returns the revoked invite link as ChatInviteLink
+  object."
+  [chat-id invite-link])
+
+(defn-api-method approve-chat-join-request
+  "Use this method to approve a chat join request. The bot must be an
+  administrator in the chat for this to work and must have the can_invite_users
+  administrator right. Returns True on success"
+  [chat-id user-id])
+
+(defn-api-method decline-chat-join-request
+  "Use this method to decline a chat join request. The bot must be an
+  administrator in the chat for this to work and must have the can_invite_users
+  administrator right. Returns True on success."
+  [chat-id user-id])
+
+(defn-api-method set-chat-photo
+  "Use this method to set a new profile photo for the chat. Photos can't be
+  changed for private chats. The bot must be an administrator in the chat for
+  this to work and must have the appropriate administrator rights. Returns True
+  on success."
+  [chat-id photo])
+
+(defn-api-method delete-chat-photo
+  "Use this method to delete a chat photo. Photos can't be changed for private
+  chats. The bot must be an administrator in the chat for this to work and must
+  have the appropriate administrator rights. Returns True on success."
+  [chat-id])
+
+(defn-api-method set-chat-title
+  "Use this method to change the title of a chat. Titles can't be changed for
+  private chats. The bot must be an administrator in the chat for this to work
+  and must have the appropriate administrator rights. Returns True on success."
+  [chat-id title])
+
+(defn-api-method set-chat-description
+  "Use this method to change the description of a group, a supergroup or a
+  channel. The bot must be an administrator in the chat for this to work and
+  must have the appropriate administrator rights. Returns True on success."
+  [chat-id description])
+
+(defn-api-method pin-chat-message
+  "Use this method to add a message to the list of pinned messages in a chat. If
+  the chat is not a private chat, the bot must be an administrator in the chat
+  for this to work and must have the 'can_pin_messages' administrator right in a
+  supergroup or 'can_edit_messages' administrator right in a channel. Returns
+  True on success."
+  [chat-id message-id])
+
+(defn-api-method unpin-chat-message
+  "Use this method to remove a message from the list of pinned messages in a
+  chat. If the chat is not a private chat, the bot must be an administrator in
+  the chat for this to work and must have the 'can_pin_messages' administrator
+  right in a supergroup or 'can_edit_messages' administrator right in a
+  channel. Returns True on success."
+  [chat-id message-id])
+
+(defn-api-method unpin-all-chat-messages
+  "Use this method to clear the list of pinned messages in a chat. If the chat
+  is not a private chat, the bot must be an administrator in the chat for this
+  to work and must have the 'can_pin_messages' administrator right in a
+  supergroup or 'can_edit_messages' administrator right in a channel. Returns
+  True on success."
+  [chat-id])
+
+(defn-api-method leave-chat
+  "Use this method for your bot to leave a group, supergroup or channel. Returns
+  True on success."
+  [chat-id])
+
+(defn-api-method get-chat
+  "Use this method to get up to date information about the chat (current name of
+  the user for one-on-one conversations, current username of a user, group or
+  channel, etc.). Returns a Chat object on success."
+  [chat-id])
+
+(defn-api-method get-chat-administrators
+  "Use this method to get up to date information about the chat (current name of
+  the user for one-on-one conversations, current username of a user, group or
+  channel, etc.). Returns a Chat object on success."
+  [chat-id])
+
+(defn-api-method get-chat-member-count
+  "Use this method to get the number of members in a chat. Returns Int on
+  success."
+  [chat-id])
+
+(defn-api-method get-chat-member
+  "Use this method to get information about a member of a chat. The method is
+  only guaranteed to work for other users if the bot is an administrator in the
+  chat. Returns a ChatMember object on success."
+  [chat-id user-id])
+
+(defn-api-method set-chat-sticker-set
+  "Use this method to set a new group sticker set for a supergroup. The bot must
+  be an administrator in the chat for this to work and must have the appropriate
+  administrator rights. Use the field can_set_sticker_set optionally returned in
+  getChat requests to check if the bot can use this method. Returns True on
+  success."
+  [chat-id sticker-set-name])
+
+(defn-api-method delete-chat-sticker-set
+  "Use this method to delete a group sticker set from a supergroup. The bot must
+  be an administrator in the chat for this to work and must have the appropriate
+  administrator rights. Use the field can_set_sticker_set optionally returned in
+  getChat requests to check if the bot can use this method. Returns True on
+  success."
+  [chat-id])
+
+(defn-api-method get-forum-topic-icon-stickers
+  "Use this method to get custom emoji stickers, which can be used as a forum
+  topic icon by any user. Requires no parameters. Returns an Array of Sticker
+  objects."
+  [])
+
+(defn-api-method create-forum-topic
+  "Use this method to create a topic in a forum supergroup chat. The bot must be
+  an administrator in the chat for this to work and must have the
+  can_manage_topics administrator rights. Returns information about the created
+  topic as a ForumTopic object."
+  [chat-id name])
+
+(defn-api-method edit-forum-topic
+  "Use this method to edit name and icon of a topic in a forum supergroup
+  chat. The bot must be an administrator in the chat for this to work and must
+  have can_manage_topics administrator rights, unless it is the creator of the
+  topic. Returns True on success."
+  [chat-id message-thread-id])
+
+(defn-api-method close-forum-topic
+  "Use this method to close an open topic in a forum supergroup chat. The bot
+  must be an administrator in the chat for this to work and must have the
+  can_manage_topics administrator rights, unless it is the creator of the
+  topic. Returns True on success."
+  [chat-id message-thread-id])
+
+(defn-api-method reopen-forum-topic
+  "Use this method to reopen a closed topic in a forum supergroup chat. The bot
+  must be an administrator in the chat for this to work and must have the
+  can_manage_topics administrator rights, unless it is the creator of the
+  topic. Returns True on success."
+  [chat-id message-thread-id])
+
+(defn-api-method delete-forum-topic
+  "Use this method to delete a forum topic along with all its messages in a
+  forum supergroup chat. The bot must be an administrator in the chat for this
+  to work and must have the can_delete_messages administrator rights. Returns
+  True on success."
+  [chat-id message-thread-id])
+
+(defn-api-method unpin-all-forum-topic-messages
+  "Use this method to clear the list of pinned messages in a forum topic. The
+  bot must be an administrator in the chat for this to work and must have the
+  can_pin_messages administrator right in the supergroup. Returns True on
+  success."
+  [chat-id message-thread-id])
+
+(defn-api-method edit-general-forum-topic
+  "Use this method to edit the name of the 'General' topic in a forum supergroup
+  chat. The bot must be an administrator in the chat for this to work and must
+  have can_manage_topics administrator rights. Returns True on success."
+  [chat-id name])
+
+(defn-api-method edit-general-forum-topic
+  "Use this method to edit the name of the 'General' topic in a forum supergroup
+  chat. The bot must be an administrator in the chat for this to work and must
+  have can_manage_topics administrator rights. Returns True on success."
+  [chat-id name])
+
+(defn-api-method close-general-forum-topic
+  "Use this method to close an open 'General' topic in a forum supergroup
+  chat. The bot must be an administrator in the chat for this to work and must
+  have the can_manage_topics administrator rights. Returns True on success."
+  [chat-id])
+
+(defn-api-method reopen-general-forum-topic
+  "Use this method to reopen a closed 'General' topic in a forum supergroup
+  chat. The bot must be an administrator in the chat for this to work and must
+  have the can_manage_topics administrator rights. The topic will be
+  automatically unhidden if it was hidden. Returns True on success."
+  [chat-id])
+
+(defn-api-method hide-general-forum-topic
+  "Use this method to hide the 'General' topic in a forum supergroup chat. The
+  bot must be an administrator in the chat for this to work and must have the
+  can_manage_topics administrator rights. The topic will be automatically closed
+  if it was open. Returns True on success."
+  [chat-id])
+
+(defn-api-method unhide-general-forum-topic
+  "Use this method to unhide the 'General' topic in a forum supergroup chat. The
+  bot must be an administrator in the chat for this to work and must have the
+  can_manage_topics administrator rights. Returns True on success."
+  [chat-id])
+
+(defn-api-method unpin-all-general-forum-topic-messages
+  "Use this method to clear the list of pinned messages in a General forum
+  topic. The bot must be an administrator in the chat for this to work and must
+  have the can_pin_messages administrator right in the supergroup. Returns True
+  on success."
+  [chat-id])
+
+(defn-api-method answer-callback-query
+  "Use this method to send answers to callback queries sent from inline
+  keyboards. The answer will be displayed to the user as a notification at the
+  top of the chat screen or as an alert. On success, True is returned."
+  [callback-query-id])
+
+(defn-api-method set-my-commands
+  "Use this method to change the list of the bot's commands. See this manual for
+  more details about bot commands. Returns True on success."
+  [commands])
+
+(defn-api-method delete-my-commands
+  "Use this method to delete the list of the bot's commands for the given scope
+  and user language. After deletion, higher level commands will be shown to
+  affected users. Returns True on success."
+  [])
+
+(defn-api-method get-my-commands
+  "Use this method to get the current list of the bot's commands for the given
+  scope and user language. Returns an Array of BotCommand objects. If commands
+  aren't set, an empty list is returned."
+  [])
+
+(defn-api-method set-my-name
+  "Use this method to change the bot's name. Returns True on success."
+  [])
+
+(defn-api-method get-my-name
+  "Use this method to get the current bot name for the given user
+  language. Returns BotName on success."
+  [])
+
+(defn-api-method set-my-description
+  "Use this method to change the bot's description, which is shown in the chat
+  with the bot if the chat is empty. Returns True on success."
+  [])
+
+(defn-api-method get-my-description
+  "Use this method to get the current bot description for the given user
+  language. Returns BotDescription on success."
+  [])
+
+(defn-api-method set-my-short-description
+  "Use this method to change the bot's short description, which is shown on the
+  bot's profile page and is sent together with the link when users share the
+  bot. Returns True on success."
+  [])
+
+(defn-api-method get-my-short-description
+  "Use this method to get the current bot short description for the given user
+  language. Returns BotShortDescription on success."
+  [])
+
+(defn-api-method set-chat-menu-button
+  "Use this method to change the bot's menu button in a private chat, or the
+  default menu button. Returns True on success."
+  [])
+
+(defn-api-method get-chat-menu-button
+  "Use this method to get the current value of the bot's menu button in a
+  private chat, or the default menu button. Returns MenuButton on success."
+  [])
+
+(defn-api-method set-my-default-administrator-rights
+  "Use this method to change the default administrator rights requested by the
+  bot when it's added as an administrator to groups or channels. These rights
+  will be suggested to users, but they are free to modify the list before adding
+  the bot. Returns True on success."
+  [])
+
+(defn-api-method get-my-default-administrator-rights
+  "Use this method to get the current default administrator rights of the
+  bot. Returns ChatAdministratorRights on success."
+  [])
+
+(defn-api-method edit-message-text
+  "Use this method to edit text and game messages. On success, if the edited
+  message is not an inline message, the edited Message is returned, otherwise
+  True is returned."
+  [text])
+
+(defn-api-method edit-message-caption
+  "Use this method to edit captions of messages. On success, if the edited
+  message is not an inline message, the edited Message is returned, otherwise
+  True is returned."
+  [])
+
+(defn-api-method edit-message-media
+  "Use this method to edit animation, audio, document, photo, or video
+  messages. If a message is part of a message album, then it can be edited only
+  to an audio for audio albums, only to a document for document albums and to a
+  photo or a video otherwise. When an inline message is edited, a new file can't
+  be uploaded; use a previously uploaded file via its file_id or specify a
+  URL. On success, if the edited message is not an inline message, the edited
+  Message is returned, otherwise True is returned."
+  [media])
+
+(defn-api-method edit-message-live-location
+  "Use this method to edit live location messages. A location can be edited
+  until its live_period expires or editing is explicitly disabled by a call to
+  stopMessageLiveLocation. On success, if the edited message is not an inline
+  message, the edited Message is returned, otherwise True is returned."
+  [media])
