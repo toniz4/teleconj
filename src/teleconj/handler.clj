@@ -8,6 +8,12 @@
     [:update_id int?]
     [:message [:map]]]))
 
+(def ^:private inline-query?
+  (m/validator
+   [:map {:closed true}
+    [:update_id int?]
+    [:inline_query [:map]]]))
+
 (def ^:private command?
   (m/validator
    [:map {:closed true}
@@ -19,6 +25,7 @@
   (cond
     (command? update) :command
     (message? update) :message
+    (inline-query? update) :inline-query
     :else :unhandled))
 
 (defn- apply-middleware [middleware update]
