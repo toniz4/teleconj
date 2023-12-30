@@ -560,4 +560,195 @@
   until its live_period expires or editing is explicitly disabled by a call to
   stopMessageLiveLocation. On success, if the edited message is not an inline
   message, the edited Message is returned, otherwise True is returned."
-  [media])
+  [latitude longitude])
+
+(defn-api-method stop-message-live-location
+  "Use this method to stop updating a live location message before live_period
+  expires. On success, if the message is not an inline message, the edited
+  Message is returned, otherwise True is returned."
+  [])
+
+(defn-api-method edit-message-reply-markup
+  "Use this method to edit only the reply markup of messages. On success, if the
+  edited message is not an inline message, the edited Message is returned,
+  otherwise True is returned."
+  [])
+
+(defn-api-method stop-poll
+  "Use this method to stop a poll which was sent by the bot. On success, the
+  stopped Poll is returned."
+  [chat-id message-id])
+
+(defn-api-method delete-message
+  "Use this method to delete a message, including service messages, with the
+   following limitations:
+
+- A message can only be deleted if it was sent less than
+48 hours ago.
+- Service messages about a supergroup, channel, or forum topic
+creation can't be deleted.
+- A dice message in a private chat can only be
+deleted if it was sent more than 24 hours ago.
+- Bots can delete outgoing messages in private chats, groups,
+and supergroups.
+- Bots can delete incoming messages in private chats.
+- Bots granted can_post_messages permissions can delete outgoing messages
+in channels.
+- If the bot is an administrator of a group, it can delete any message
+there.
+- If the bot has can_delete_messages permission in a supergroup or a
+channel, it can delete any message there. Returns True on success."
+  [chat-id message-id])
+
+(defn-api-method delete-messages
+  "Use this method to delete multiple messages simultaneously. If some of the
+  specified messages can't be found, they are skipped. Returns True on success."
+  [chat-id message-ids])
+
+(defn-api-method send-sticker
+  "Use this method to send static .WEBP, animated .TGS, or video .WEBM
+  stickers. On success, the sent Message is returned."
+  [chat-id sticker])
+
+(defn-api-method get-sticker-set
+  "Use this method to get a sticker set. On success, a StickerSet object is
+  returned."
+  [name])
+
+(defn-api-method get-custom-emoji-stickers
+  "Use this method to get information about custom emoji stickers by their
+  identifiers. Returns an Array of Sticker objects."
+  [custom-emoji-ids])
+
+(defn-api-method upload-sticker-file
+  "Use this method to upload a file with a sticker for later use in the
+  createNewStickerSet and addStickerToSet methods (the file can be used multiple
+  times). Returns the uploaded File on success."
+  [user-id sticker sticker-format])
+
+(defn-api-method create-new-sticker-set
+  "Use this method to create a new sticker set owned by a user. The bot will be
+  able to edit the sticker set thus created. Returns True on success."
+  [user-id name title stickers sticker-format])
+
+(defn-api-method add-sticker-to-set
+  "Use this method to add a new sticker to a set created by the bot. The format
+  of the added sticker must match the format of the other stickers in the
+  set. Emoji sticker sets can have up to 200 stickers. Animated and video
+  sticker sets can have up to 50 stickers. Static sticker sets can have up to
+  120 stickers. Returns True on success."
+  [user-id name sticker])
+
+(defn-api-method set-sticker-position-in-set
+  "Use this method to move a sticker in a set created by the bot to a specific
+  position. Returns True on success."
+  [sticker position])
+
+(defn-api-method delete-sticker-from-set
+  "Use this method to delete a sticker from a set created by the bot. Returns
+  True on success."
+  [sticker])
+
+(defn-api-method set-sticker-emoji-list
+  "Use this method to change the list of emoji assigned to a regular or custom
+  emoji sticker. The sticker must belong to a sticker set created by the
+  bot. Returns True on success."
+  [sticker emoji-list])
+
+
+(defn-api-method set-sticker-keywords
+  "Use this method to change search keywords assigned to a regular or custom
+  emoji sticker. The sticker must belong to a sticker set created by the
+  bot. Returns True on success."
+  [sticker keywords])
+
+(defn-api-method set-sticker-mask-position
+  "Use this method to change the mask position of a mask sticker. The sticker
+  must belong to a sticker set that was created by the bot. Returns True on
+  success."
+  [sticker mask-position])
+
+(defn-api-method set-sticker-mask-position
+  "Use this method to change the mask position of a mask sticker. The sticker
+  must belong to a sticker set that was created by the bot. Returns True on
+  success."
+  [sticker keywords])
+
+(defn-api-method set-sticker-set-title
+  "Use this method to set the title of a created sticker set. Returns True on
+  success."
+  [name title])
+
+(defn-api-method set-sticker-set-thumbnail
+  "Use this method to set the thumbnail of a regular or mask sticker set. The
+  format of the thumbnail file must match the format of the stickers in the
+  set. Returns True on success."
+  [name user-id])
+
+(defn-api-method set-sticker-set-thumbnail
+  "Use this method to set the thumbnail of a regular or mask sticker set. The
+  format of the thumbnail file must match the format of the stickers in the
+  set. Returns True on success."
+  [name user-id])
+
+(defn-api-method set-custom-emoji-sticker-set-thumbnail
+  "Use this method to set the thumbnail of a custom emoji sticker set. Returns
+  True on success."
+  [name custom-emoji-id])
+
+(defn-api-method delete-sticker-set
+  "Use this method to delete a sticker set that was created by the bot. Returns
+  True on success."
+  [name])
+
+(defn-api-method answer-inline-query
+  "Use this method to send answers to an inline query. On success, True is
+  returned."
+  [inline-query-id results])
+
+(defn-api-method answer-web-app-query
+  "Use this method to set the result of an interaction with a Web App and send a
+  corresponding message on behalf of the user to the chat from which the query
+  originated. On success, a SentWebAppMessage object is returned."
+  [web-app-query-id result])
+
+(defn-api-method send-invoice
+  "Use this method to send invoices. On success, the sent Message is returned."
+  [chat-id title description payload provider-token currency prices])
+
+(defn-api-method create-invoice-link
+  "Use this method to create a link for an invoice. Returns the created invoice
+  link as String on success."
+  [title description payload provider-token currency prices])
+
+(defn-api-method answer-shipping-query
+  "If you sent an invoice requesting a shipping address and the parameter
+  is_flexible was specified, the Bot API will send an Update with a
+  shipping_query field to the bot. Use this method to reply to shipping
+  queries. On success, True is returned."
+  [shipping-query-id ok])
+
+(defn-api-method answer-pre-checkout-query
+  "Once the user has confirmed their payment and shipping details, the Bot API
+  sends the final confirmation in the form of an Update with the field
+  pre_checkout_query. Use this method to respond to such pre-checkout
+  queries. On success, True is returned. Note: The Bot API must receive an
+  answer within 10 seconds after the pre-checkout query was sent."
+  [pre-checkout-query-id ok])
+
+(defn-api-method send-game
+  "Use this method to send a game. On success, the sent Message is returned."
+  [chat-id game-short-name])
+
+(defn-api-method set-game-score
+  "Use this method to set the score of the specified user in a game message. On
+  success, if the message is not an inline message, the Message is returned,
+  otherwise True is returned. Returns an error, if the new score is not greater
+  than the user's current score in the chat and force is False."
+  [user-id score])
+
+(defn-api-method get-game-high-scores
+  "Use this method to get data for high score tables. Will return the score of
+  the specified user and several of their neighbors in a game. Returns an Array
+  of GameHighScore objects."
+  [user-id])
