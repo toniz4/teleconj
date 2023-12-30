@@ -1,5 +1,6 @@
 (ns teleconj.client
   (:require [org.httpkit.client :as client]
+            [cheshire.core :as json]
             [clojure.string :as str]))
 
 (def base-url "https://api.telegram.org")
@@ -20,9 +21,17 @@
        (apply hash-map)))
 
 (defn- call-api-method [method token params]
-  (let [url (str base-url "/bot" token "/" method)]
-    (client/post url {:content-type :json
-                      :form-params params})))
+  (let [url (str base-url "/bot" token "/" method)
+        body (json/encode params)
+        response (client/request
+                  {:url url
+                   :method :post
+                   :headers {"Content-Type" "application/json"}
+                   :body body})]
+    (delay (-> response
+               deref
+               :body
+               (json/decode keyword)))))
 
 (defmacro defn-api-method [method-sym doc args]
   (let [method-name (kebab-case->camel-case (str method-sym))
