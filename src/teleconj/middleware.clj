@@ -4,23 +4,33 @@
 (defn message-middleware
   "Takes a update and adds the key :message-text containing the
   message text and the key :chat-id with the chat id"
-  [update]
-  (let [{:keys [message]} update]
-    (conj update
-          {:message-text (:text message)
-           :chat-id (-> message :chat :id)})))
+  [handler]
+  (fn [up]
+    (let [{:keys [message]} up]
+      (handler (conj up
+                     {:message-text (:text message)
+                      :chat-id (-> message :chat :id)})))))
 
 (defn command-middleware
   "Takes a command update and adds the key :command-args
   containing the arguments to a command"
-  [update]
-  (let [{:keys [message]} update
-        args (rest (str/split (:text message) #" "))]
-    (conj update {:command-args args})))
+  [handler]
+  (fn [up]
+    (let [{:keys [message]} up
+          args (rest (str/split (:text message) #" "))]
+      (handler (conj up {:command-args args})))))
 
 (defn inline-middleware
   "Takes a inline update and adds the key
   :query containing the inline query"
-  [update]
-  (let [{:keys [inline_query]} update]
-    (conj update {:query (:query inline_query)})))
+  [handler]
+  (fn [up]
+    (let [{:keys [inline_query]} up]
+      (conj up {:query (:query inline_query)}))))
+
+(defn loging-middleware
+  "Logs the current update with logfn"
+  [handler logfn]
+  (fn [up]
+    (logfn up)
+    (handler up)))
