@@ -1,12 +1,9 @@
 (ns teleconj.poller
   (:require
-   [clojure.tools.logging :as log]
    [org.httpkit.client :as client]
    [teleconj.client :refer [base-url]]
    [cheshire.core :as json]
    [clojure.core.async :as a]))
-
-;; (log/info "teste")
 
 (defn- get-updates
   ([token]
@@ -44,6 +41,4 @@
 
 (defn stop! [service]
   (a/close! service))
-
-(get-updates "6258987071AAHliVLweKcDX6qSAR8lkMkaFjz4dzX-l5o")
 
